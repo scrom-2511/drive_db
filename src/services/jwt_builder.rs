@@ -1,10 +1,5 @@
-use std::{
-    fs,
-    path::Path,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::{fs, path::Path};
 
-use jsonwebtoken::{Algorithm, Header};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::DriveDbError;
@@ -41,3 +36,18 @@ pub struct JwtBuilder {
     file_data: ServiceAccount,
 }
 
+impl JwtBuilder {
+    fn new(file_path: &Path) -> Result<Self, DriveDbError> {
+        let file = match fs::read_to_string(file_path) {
+            Ok(file) => file,
+            Err(e) => return Err(DriveDbError::WrongFilePath(e)),
+        };
+
+        let file_data = match serde_json::from_str::<ServiceAccount>(&file) {
+            Ok(file_data) => file_data,
+            Err(e) => return Err(DriveDbError::WrongFile),
+        };
+
+        Ok(Self { file_data })
+    }
+}
