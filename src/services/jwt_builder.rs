@@ -1,4 +1,8 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
@@ -50,6 +54,15 @@ impl JwtBuilder {
         };
 
         Ok(Self { file_data })
+    }
+
+    fn get_epoch_time() -> (u64, u64) {
+        let current_epoch_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let exp_epoch_time = current_epoch_time + 3600;
+        (current_epoch_time, exp_epoch_time)
     }
 
     fn build(json_data: ServiceAccount) -> Result<String, DriveDbError> {
