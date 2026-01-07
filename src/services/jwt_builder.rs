@@ -39,7 +39,7 @@ struct Claims {
 pub struct JwtBuilder;
 
 impl JwtBuilder {
-    pub fn new(file_path: &Path) -> Result<(String, u64), DriveDbError> {
+    pub(crate) fn new(file_path: &Path) -> Result<(String, u64), DriveDbError> {
         let file = match fs::read_to_string(file_path) {
             Ok(file) => file,
             Err(e) => return Err(DriveDbError::WrongFilePath(e)),
@@ -55,7 +55,7 @@ impl JwtBuilder {
         Ok((signed_jwt, exp_time))
     }
 
-    pub fn get_epoch_time() -> (u64, u64) {
+    pub(crate) fn get_epoch_time() -> (u64, u64) {
         let current_epoch_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -64,7 +64,7 @@ impl JwtBuilder {
         (current_epoch_time, exp_epoch_time)
     }
 
-    pub fn build(json_data: ServiceAccount) -> Result<(String, u64), DriveDbError> {
+    fn build(json_data: ServiceAccount) -> Result<(String, u64), DriveDbError> {
         let mut header = Header::new(Algorithm::RS256);
         header.kid = Some(json_data.private_key_id.clone());
         header.typ = Some("JWT".to_string());
