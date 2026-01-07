@@ -36,27 +36,26 @@ struct Claims {
     exp: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct JwtBuilder {
-    file_data: ServiceAccount,
-}
+pub struct JwtBuilder;
 
 impl JwtBuilder {
-    fn new(file_path: &Path) -> Result<Self, DriveDbError> {
+    pub fn new(file_path: &Path) -> Result<String, DriveDbError> {
         let file = match fs::read_to_string(file_path) {
             Ok(file) => file,
             Err(e) => return Err(DriveDbError::WrongFilePath(e)),
         };
 
-        let file_data = match serde_json::from_str::<ServiceAccount>(&file) {
-            Ok(file_data) => file_data,
+        let json_data = match serde_json::from_str::<ServiceAccount>(&file) {
+            Ok(json_data) => json_data,
             Err(e) => return Err(DriveDbError::WrongFile),
         };
 
-        Ok(Self { file_data })
+        let signed_jwt = Self::build(json_data)?;
+
+        Ok(signed_jwt)
     }
 
-    fn get_epoch_time() -> (u64, u64) {
+    pub fn get_epoch_time() -> (u64, u64) {
         let current_epoch_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -65,7 +64,7 @@ impl JwtBuilder {
         (current_epoch_time, exp_epoch_time)
     }
 
-    fn build(json_data: ServiceAccount) -> Result<String, DriveDbError> {
+    pub fn build(json_data: ServiceAccount) -> Result<String, DriveDbError> {
         let mut header = Header::new(Algorithm::RS256);
         header.kid = Some(json_data.private_key_id.clone());
         header.typ = Some("JWT".to_string());
