@@ -1,5 +1,6 @@
 use std::{fs, path::Path};
 
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::DriveDbError;
@@ -49,5 +50,27 @@ impl JwtBuilder {
         };
 
         Ok(Self { file_data })
+    }
+
+    fn build(json_data: ServiceAccount) -> Result<String, DriveDbError> {
+        let mut header = Header::new(Algorithm::RS256);
+        header.kid = Some(json_data.private_key_id.clone());
+        header.typ = Some("JWT".to_string());
+
+        let (current_epoch_time, exp_epoch_time) = Self::get_epoch_time();
+
+        let claims = Claims {
+            iss: json_data.client_email.clone(),
+            aud: String::from("https://oauth2.googleapis.com/token"),
+            iat: current_epoch_time,
+            exp: exp_epoch_time,
+            scope: "https://www.googleapis.com/auth/spreadsheets".to_string(),
+        };
+
+        let key: EncodingKey = EncodingKey::from_rsa_pem(json_data.private_key.as_bytes()).unwrap();
+
+        let signed_jwt = encode(&header, &claims, &key).unwrap();
+
+        Ok(signed_jwt)
     }
 }
