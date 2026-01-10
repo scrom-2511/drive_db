@@ -1,2 +1,11 @@
 pub mod access_token;
 pub mod jwt_builder;
+pub mod api_client;
+pub mod create_table;
+pub mod insert_db;
+pub mod find_db;
+pub mod update_db;
+pub mod delete_db;
+pub mod db_data;
+pub mod table;
+pub mod table_traits;
